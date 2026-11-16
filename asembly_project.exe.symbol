@@ -1,0 +1,36 @@
+< THE SYMBOL TABLE >  asembly_project.exe  --  emu8086 assembler version: 4.08 
+===================================================================================================
+Name                     	Offset    	Size      	Type      	Segment   
+===================================================================================================
+STACK                    	00000     	-5        	SEGMENT   	(ITSELF)  
+DATA                     	00010     	-5        	SEGMENT   	(ITSELF)  
+SECRET_KEY               	00000     	1         	VAR       	data      
+USER_INPUT               	00006     	1         	VAR       	data      
+MSG_WELCOME              	0000C     	1         	VAR       	data      
+MSG_CORRECT              	00020     	1         	VAR       	data      
+MSG_WRONG                	00032     	1         	VAR       	data      
+CODE                     	00015     	-5        	SEGMENT   	(ITSELF)  
+MAIN                     	00000     	-1        	NEAR      	code      
+START_OVER               	0000E     	-1        	LABEL     	code      
+GET_KEY_LOOP             	0001D     	-1        	LABEL     	code      
+CORRECT_PASS             	00038     	-1        	LABEL     	code      
+WRONG_PASS               	00043     	-1        	LABEL     	code      
+DONE                     	0004C     	-1        	LABEL     	code      
+LCD_INIT                 	00051     	-1        	NEAR      	code      
+LCD_CLEAR                	00061     	-1        	NEAR      	code      
+LCD_SEND_CMD             	0006A     	-1        	NEAR      	code      
+LCD_SEND_DATA            	0007C     	-1        	NEAR      	code      
+LCD_PRINT_STRING         	0008E     	-1        	NEAR      	code      
+NEXT_CHAR                	0008E     	-1        	LABEL     	code      
+END_STRING               	00098     	-1        	LABEL     	code      
+READ_KEYPAD              	00099     	-1        	NEAR      	code      
+WAIT_RELEASE             	00099     	-1        	LABEL     	code      
+WAIT_PRESS               	000A6     	-1        	LABEL     	code      
+DELAY                    	000B3     	-1        	NEAR      	code      
+D1                       	000B7     	-1        	LABEL     	code      
+LONG_DELAY               	000BB     	-1        	NEAR      	code      
+D2                       	000BF     	-1        	LABEL     	code      
+===================================================================================================
+[ 7/20/2026  --  4:16:09 AM ] 
+< END >
+ 

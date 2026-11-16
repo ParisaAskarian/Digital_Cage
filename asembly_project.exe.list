@@ -1,0 +1,239 @@
+EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
+ 
+asembly_project.exe -- emu8086 assembler version: 4.08  
+ 
+[ 7/20/2026  --  4:16:09 AM ] 
+ 
+===================================================================================================
+[LINE]     LOC: MACHINE CODE                          SOURCE
+===================================================================================================
+ 
+[   1]        :                                       .MODEL SMALL
+[   2]        :                                       .STACK 100h
+[   3]        :                                       
+[   4]        :                                       .DATA
+[   5]        :                                       ; --- ???????? ???? 8255 (??? ????? ???? ??? ????? ????) ---
+[   6]        :                                       PORTA       EQU 80h    ; LCD Data (D0-D7)
+[   7]        :                                       PORTB       EQU 82h    ; LCD Control (PB0=RS, PB1=RW, PB2=E)
+[   8]        :                                       PORTC       EQU 84h    ; Keypad (PC0-PC3 Output Rows, PC4-PC7 Input Cols)
+[   9]        :                                       CTRL_8255   EQU 86h    ; Control Register
+[  10]        :                                       
+[  11]        :                                       ; --- ???????? ??? ???? ---
+[  12]    0100: 31 32 33 34 35 36                     SECRET_KEY  DB '1', '2', '3', '4', '5', '6'  ; ??? ? ???? ???????
+[  13]    0106: 00 00 00 00 00 00                     USER_INPUT  DB 6 DUP(?)                     ; ????? ?????
+[  14]        :                                       
+[  15]    010C: 45 6E 74 65 72 20 36 2D 44 69 67 69   MSG_WELCOME DB 'Enter 6-Digit Pass:', 0
+                74 20 50 61 73 73 3A 00             
+[  16]    0120: 50 61 73 73 77 6F 72 64 20 43 6F 72   MSG_CORRECT DB 'Password Correct!', 0
+                72 65 63 74 21 00                   
+[  17]    0132: 50 61 73 73 77 6F 72 64 20 57 72 6F   MSG_WRONG   DB 'Password Wrong!', 0
+                6E 67 21 00                         
+[  18]        :                                       
+[  19]        :                                       .CODE
+[  20]    0150:                                       MAIN PROC
+[  21]    0150: B8 10 00                              MOV AX, @DATA
+[  22]    0153: 8E D8                                 MOV DS, AX
+[  23]        :                                       
+[  24]        :                                       ; ?. ???????? 8255: PortA=Out, PortB=Out, PortC_Lower=Out, PortC_Upper=In
+[  25]    0155: B0 88                                 MOV AL, 88h
+[  26]    0157: BA 86 00                              MOV DX, CTRL_8255
+[  27]    015A: EE                                    OUT DX, AL
+[  28]        :                                       
+[  29]        :                                       ; ?. ???????? ????? LCD
+[  30]    015B: E8 43 00                              CALL LCD_INIT
+[  31]        :                                       
+[  32]    015E:                                       START_OVER:
+[  33]    015E: E8 50 00                              CALL LCD_CLEAR
+[  34]    0161: BE 0C 00                              LEA SI, MSG_WELCOME
+[  35]    0164: E8 77 00                              CALL LCD_PRINT_STRING
+[  36]        :                                       
+[  37]        :                                       ; ?. ?????? ? ??? ?? ?????
+[  38]    0167: B9 06 00                              MOV CX, 6
+[  39]    016A: BF 06 00                              LEA DI, USER_INPUT
+[  40]        :                                       
+[  41]    016D:                                       GET_KEY_LOOP:
+[  42]    016D: E8 79 00                              CALL READ_KEYPAD       ; ?????? ?? ???? ?? ?????
+[  43]    0170: 88 05                                 MOV [DI], AL           ; ????? ????
+[  44]    0172: 47                                    INC DI
+[  45]        :                                       
+[  46]        :                                       ; ????? ????? (*) ?? ???? ?? ????
+[  47]    0173: B0 2A                                 MOV AL, '*'
+[  48]    0175: E8 54 00                              CALL LCD_SEND_DATA
+[  49]        :                                       
+[  50]    0178: E2 F3                                 LOOP GET_KEY_LOOP
+[  51]        :                                       
+[  52]        :                                       ; ?. ?????? ??? ???? ??? ?? SECRET_KEY
+[  53]    017A: BE 00 00                              LEA SI, SECRET_KEY
+[  54]    017D: BF 06 00                              LEA DI, USER_INPUT
+[  55]    0180: B9 06 00                              MOV CX, 6
+[  56]    0183: FC                                    CLD
+[  57]    0184: F3 A6                                 REPE CMPSB
+[  58]    0186: 75 0B                                 JNE WRONG_PASS
+[  59]        :                                       
+[  60]    0188:                                       CORRECT_PASS:
+[  61]    0188: E8 26 00                              CALL LCD_CLEAR
+[  62]    018B: BE 20 00                              LEA SI, MSG_CORRECT
+[  63]    018E: E8 4D 00                              CALL LCD_PRINT_STRING
+[  64]    0191: EB 09                                 JMP DONE
+[  65]        :                                       
+[  66]    0193:                                       WRONG_PASS:
+[  67]    0193: E8 1B 00                              CALL LCD_CLEAR
+[  68]    0196: BE 32 00                              LEA SI, MSG_WRONG
+[  69]    0199: E8 42 00                              CALL LCD_PRINT_STRING
+[  70]        :                                       
+[  71]    019C:                                       DONE:
+[  72]    019C: E8 6C 00                              CALL LONG_DELAY
+[  73]    019F: EB BD                                 JMP START_OVER         ; ?????? ?? ???? ???
+[  74]        :                                       
+[  75]        :                                       MAIN ENDP
+[  76]        :                                       
+[  77]        :                                       ; =========================================================
+[  78]        :                                       ; ????? LCD (?? ????? ???? Enable ? RS)
+[  79]        :                                       ; =========================================================
+[  80]    01A1:                                       LCD_INIT PROC
+[  81]    01A1: B0 38                                 MOV AL, 38h            ; Mode 8-bit, 2 lines
+[  82]    01A3: E8 14 00                              CALL LCD_SEND_CMD
+[  83]    01A6: B0 0C                                 MOV AL, 0Ch            ; Display ON, Cursor OFF
+[  84]    01A8: E8 0F 00                              CALL LCD_SEND_CMD
+[  85]    01AB: B0 01                                 MOV AL, 01h            ; Clear
+[  86]    01AD: E8 0A 00                              CALL LCD_SEND_CMD
+[  87]    01B0: C3                                    RET
+[  88]        :                                       LCD_INIT ENDP
+[  89]        :                                       
+[  90]    01B1:                                       LCD_CLEAR PROC
+[  91]    01B1: B0 01                                 MOV AL, 01h
+[  92]    01B3: E8 04 00                              CALL LCD_SEND_CMD
+[  93]    01B6: E8 4A 00                              CALL DELAY
+[  94]    01B9: C3                                    RET
+[  95]        :                                       LCD_CLEAR ENDP
+[  96]        :                                       
+[  97]    01BA:                                       LCD_SEND_CMD PROC
+[  98]    01BA: BA 80 00                              MOV DX, PORTA
+[  99]    01BD: EE                                    OUT DX, AL             ; ????? ????? ??? Port A
+[ 100]    01BE: BA 82 00                              MOV DX, PORTB
+[ 101]    01C1: B0 04                                 MOV AL, 04h            ; RS=0, E=1
+[ 102]    01C3: EE                                    OUT DX, AL
+[ 103]    01C4: 90                                    NOP
+[ 104]    01C5: B0 00                                 MOV AL, 00h            ; RS=0, E=0 (????? ??? ?????)
+[ 105]    01C7: EE                                    OUT DX, AL
+[ 106]    01C8: E8 38 00                              CALL DELAY
+[ 107]    01CB: C3                                    RET
+[ 108]        :                                       LCD_SEND_CMD ENDP
+[ 109]        :                                       
+[ 110]    01CC:                                       LCD_SEND_DATA PROC
+[ 111]    01CC: BA 80 00                              MOV DX, PORTA
+[ 112]    01CF: EE                                    OUT DX, AL             ; ????? ???? ??? Port A
+[ 113]    01D0: BA 82 00                              MOV DX, PORTB
+[ 114]    01D3: B0 05                                 MOV AL, 05h            ; RS=1, E=1
+[ 115]    01D5: EE                                    OUT DX, AL
+[ 116]    01D6: 90                                    NOP
+[ 117]    01D7: B0 01                                 MOV AL, 01h            ; RS=1, E=0 (????? ??? ?????)
+[ 118]    01D9: EE                                    OUT DX, AL
+[ 119]    01DA: E8 26 00                              CALL DELAY
+[ 120]    01DD: C3                                    RET
+[ 121]        :                                       LCD_SEND_DATA ENDP
+[ 122]        :                                       
+[ 123]    01DE:                                       LCD_PRINT_STRING PROC
+[ 124]    01DE:                                       NEXT_CHAR:
+[ 125]    01DE: AC                                    LODSB
+[ 126]    01DF: 3C 00                                 CMP AL, 0
+[ 127]    01E1: 74 05                                 JZ END_STRING
+[ 128]    01E3: E8 E6 FF                              CALL LCD_SEND_DATA
+[ 129]    01E6: EB F6                                 JMP NEXT_CHAR
+[ 130]    01E8:                                       END_STRING:
+[ 131]    01E8: C3                                    RET
+[ 132]        :                                       LCD_PRINT_STRING ENDP
+[ 133]        :                                       
+[ 134]        :                                       ; =========================================================
+[ 135]        :                                       ; ???? ???? ????? ??????? (Matrix Keypad Scan)
+[ 136]        :                                       ; =========================================================
+[ 137]    01E9:                                       READ_KEYPAD PROC
+[ 138]    01E9:                                       WAIT_RELEASE:
+[ 139]        :                                       ; ?? ???? ??? ??? ???? ????
+[ 140]    01E9: BA 84 00                              MOV DX, PORTC
+[ 141]    01EC: B0 00                                 MOV AL, 00h
+[ 142]    01EE: EE                                    OUT DX, AL
+[ 143]    01EF: EC                                    IN AL, DX
+[ 144]    01F0: 24 F0                                 AND AL, 0F0h
+[ 145]    01F2: 3C F0                                 CMP AL, 0F0h
+[ 146]    01F4: 75 F3                                 JNE WAIT_RELEASE
+[ 147]        :                                       
+[ 148]    01F6:                                       WAIT_PRESS:
+[ 149]        :                                       ; ???? ?????
+[ 150]    01F6: B0 FE                                 MOV AL, 0FEh           ; ??? ???? ??? ??? (PC0=0)
+[ 151]    01F8: BA 84 00                              MOV DX, PORTC
+[ 152]    01FB: EE                                    OUT DX, AL
+[ 153]    01FC: EC                                    IN AL, DX
+[ 154]        :                                       ; (?? ???? ???? ???? ????? ????? ???? ???????)
+[ 155]        :                                       ; ?? ??? ????????? ?? ??????? ????? ??????????? ???? ???:
+[ 156]    01FD: B0 31                                 MOV AL, '1'
+[ 157]    01FF: E8 01 00                              CALL DELAY
+[ 158]    0202: C3                                    RET
+[ 159]        :                                       READ_KEYPAD ENDP
+[ 160]        :                                       
+[ 161]        :                                       ; =========================================================
+[ 162]        :                                       ; ????? ????? (Delay)
+[ 163]        :                                       ; =========================================================
+[ 164]    0203:                                       DELAY PROC
+[ 165]    0203: 51                                    PUSH CX
+[ 166]    0204: B9 E8 03                              MOV CX, 1000
+[ 167]    0207: E2 FE                                 D1: LOOP D1
+[ 168]    0209: 59                                    POP CX
+[ 169]    020A: C3                                    RET
+[ 170]        :                                       DELAY ENDP
+[ 171]        :                                       
+[ 172]    020B:                                       LONG_DELAY PROC
+[ 173]    020B: 51                                    PUSH CX
+[ 174]    020C: B9 FF FF                              MOV CX, 0FFFFh
+[ 175]    020F: E2 FE                                 D2: LOOP D2
+[ 176]    0211: 59                                    POP CX
+[ 177]    0212: C3                                    RET
+[ 178]        :                                       LONG_DELAY ENDP
+[ 179]        :                                       
+[ 180]        :                                       END MAIN
+[ 181]        :                                       
+ 
+===================================================================================================
+ 
+EXE HEADER - bytes from 0000 to 01FF inclusive.
+
+0000: 4D      -   exe signature (M)
+0001: 5A      -   exe signature (Z)
+0002: 13      -   bytes on last page (l.byte)
+0003: 00      -   bytes on last page (h.byte)
+0004: 03      -   512 byte pages in file (l.byte)
+0005: 00      -   512 byte pages in file (h.byte)
+0006: 01      -   relocations (l.byte)
+0007: 00      -   relocations (h.byte)
+0008: 20      -   paragraphs in header (l.byte)
+0009: 00      -   paragraphs in header (h.byte)
+000A: 00      -   minimum memory (l.byte)
+000B: 00      -   minimum memory (h.byte)
+000C: FF      -   maximum memory (l.byte)
+000D: FF      -   maximum memory (h.byte)
+000E: 00      -   SS - stack segment (l.byte)
+000F: 00      -   SS - stack segment (h.byte)
+0010: 00      -   SP - stack pointer (l.byte)
+0011: 01      -   SP - stack pointer (h.byte)
+0012: 6A      -   check sum (l.byte)
+0013: EF      -   check sum (h.byte)
+0014: 00      -   IP - instruction pointer (l.byte)
+0015: 00      -   IP - instruction pointer (h.byte)
+0016: 15      -   CS - code segment (l.byte)
+0017: 00      -   CS - code segment (h.byte)
+0018: 1E      -   relocation table adress (l.byte)
+0019: 00      -   relocation table adress (h.byte)
+001A: 00      -   overlay number (l.byte)
+001B: 00      -   overlay number (h.byte)
+001C: 01      -   signature (l.byte)
+001D: 00      -   signature (h.byte)
+001E: 01      -   relocation table - offset inside segment (l.byte)
+001F: 00      -   relocation table - offset inside segment (h.byte)
+0020: 15      -   relocation table - segment anchor (l.byte)
+0021: 00      -   relocation table - segment anchor (h.byte)
+0022 to 01FF  -   reserved relocation area  (00) 
+
+
+
+
+===================================================================================================
