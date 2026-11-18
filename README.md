@@ -24,3 +24,8 @@ The system consists of the following components:
 <escape>🚧</escape> **Work in Progress**
 
 This project is currently under development. More features and improvements will be added in future updates.
+
+## Contributors
+
+- Parisa Askarian – Developer
+- Ala Zahedifar – Developer
